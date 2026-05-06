@@ -2,17 +2,17 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from scipy.sparse import diags
 
-def izrac_knn(X, k = 7):
-    razlike = X[:, np.newaxis, :] - X[np.newaxis, :, :]; # (m x 1 x f) - (1 x m x f), reducira se na m x m x f, razlike[i,j] = x_i - x_j
-    udaljenosti = np.sqrt(np.sum(razlike**2, axis=-1))
+from sklearn.neighbors import NearestNeighbors
 
-    indeksi = np.argsort(udaljenosti, axis=1)[:, 1:k+1]
-    udaljenosti = np.take_along_axis(udaljenosti, indeksi, axis=1)
-
-    return udaljenosti, indeksi
+def izrac_knn(X, k=16):
+    nn = NearestNeighbors(n_neighbors=k+1, metric='euclidean', algorithm='ball_tree')
+    nn.fit(X)
+    udaljenosti, indeksi = nn.kneighbors(X)
+    return udaljenosti[:, 1:], indeksi[:, 1:]
 
 def izrac_lokalni_sigma(udaljenosti, K = 7):
-    return udaljenosti[:, K-1] #udaljenosti K-tih (0-indeksirano) točaka od trenutne točke (prvi indeks)
+    sigma = udaljenosti[:, K-1]
+    return np.maximum(sigma, 1e-10) #udaljenosti K-tih (0-indeksirano) točaka od trenutne točke (prvi indeks)
 
 def izrac_affinity(X, k = 7):
     udaljenosti, indeksi = izrac_knn(X,k)
