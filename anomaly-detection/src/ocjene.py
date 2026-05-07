@@ -8,10 +8,12 @@ def izrac_globalni_sigma(embedding, n_pair=1000, r=1):
     indeks1 = np.random.randint(0, m, n_pair)
     indeks2 = np.random.randint(0, m, n_pair)
     difuzijske_udaljenosti = np.sum((embedding[indeks1] - embedding[indeks2])**2, axis=1)
+    difuzijske_udaljenosti = np.sqrt(difuzijske_udaljenosti)
     sigma_kvadrat = np.var(difuzijske_udaljenosti)
     print(f"  globalni_sigma: {r * sigma_kvadrat:.6f}")
     #return r * sigma_kvadrat #ovako je zadana u radu
-    return max(r * sigma_kvadrat, 1e-3)
+    ##return max(r * sigma_kvadrat, 1e-3)
+    return r * sigma_kvadrat
 
 #racuna anomaly score (jednadzba 20)
 #W je velicina prozora koji gledamo oko piksela (zapravo manhattan radijus)

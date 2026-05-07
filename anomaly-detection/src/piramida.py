@@ -91,7 +91,7 @@ def run_pyramid(slika, config):
         sigma = izrac_lokalni_sigma(udaljenosti)
         W_aff = izrac_affinity(X_podskup, config.k)
         P = normaliz_po_retcima(W_aff)
-        embedding, sv_vrijednosti = konstr_difuz_preslikavanje(P, config.d, config.t)
+        embedding, sv_vrijednosti = konstr_difuz_preslikavanje(P, config.d_po_razini[razina], config.t)
         
         #i sad prosirim na sve piksele
         if config.koristiti_laplacian:
@@ -100,7 +100,7 @@ def run_pyramid(slika, config):
             embedding_novo = prosiri_nystrom(X_podskup, X_novi, embedding, sv_vrijednosti, sigma)
         
         #sad potpuni embedding:
-        embedding_cijeli = np.zeros((n_piksela, config.d))
+        embedding_cijeli = np.zeros((n_piksela, config.d_po_razini[razina]))
         embedding_cijeli[podskup_indeksi] = embedding
         embedding_cijeli[novi_indeksi] = embedding_novo
         
