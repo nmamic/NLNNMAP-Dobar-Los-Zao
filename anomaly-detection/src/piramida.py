@@ -4,7 +4,7 @@ import numpy as np
 from jezgra import izrac_knn, izrac_lokalni_sigma, izrac_affinity, normaliz_po_retcima
 from mape import konstr_difuz_preslikavanje
 from prosirenje import prosiri_nystrom, prosiri_laplacian_piramida
-from ocjene import izrac_anomaly_score
+from ocjene import izrac_anomaly_score, izrac_saliency_score
 
 def izvuci_patcheve(slika, indeksi, patch_velicina):
     H,W = slika.shape
@@ -104,8 +104,21 @@ def run_pyramid(slika, config):
         embedding_cijeli[podskup_indeksi] = embedding
         embedding_cijeli[novi_indeksi] = embedding_novo
         
-        #izracunam anomaly scoreove
-        scores = izrac_anomaly_score(embedding_cijeli, img.shape, config.W_po_razini[razina], config.M_po_razini[razina])
+        #izracunam anomaly/saliency scoreove
+        if config.koristiti_saliency_score:
+            scores = izrac_saliency_score(
+                embedding_cijeli,
+                img.shape,
+                K=config.saliency_K,
+                c=config.saliency_c
+            )
+        else:
+            scores = izrac_anomaly_score(
+                embedding_cijeli,
+                img.shape,
+                config.W_po_razini[razina],
+                config.M_po_razini[razina]
+            )
 
         print(f"  Raspon scoreova: {scores.min():.4f} - {scores.max():.4f}")
         print(f"  99. centil score-ova: {np.percentile(scores, 99):.4f}")

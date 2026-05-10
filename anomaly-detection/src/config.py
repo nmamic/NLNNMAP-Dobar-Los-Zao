@@ -12,6 +12,9 @@ class Config:
     t: int = 1
     r: float = 20.0
     koristiti_laplacian: bool = True
+    koristiti_saliency_score: bool = False
+    saliency_K: int = 64
+    saliency_c: float = 3.0
 
     def __post_init__(self):
         if self.uzorkovanje_postotci is None:

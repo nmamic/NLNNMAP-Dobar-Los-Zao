@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
 
 #trebam izracunati globalni sigma kako je opisano ispod jednadzbe (19) u radu
 #uzimam n_pair parova piksela i racunam difuzijsku udaljenost za svaki par
@@ -49,4 +50,51 @@ def izrac_anomaly_score(embedding, slika_shape, W, M):
         w = np.exp(-np.sum(razlike**2, axis=1) / globalni_sigma)
         scores[i] = 1 - w.mean()
     
+    return scores.reshape(H, N)
+
+#saliency score iz drugog rada
+#K je broj najblizih susjeda piksela
+#c je koeficijent uz d_position
+def izrac_saliency_score(embedding, slika_shape, K=64, c=3.0, eps=1e-10):
+    """
+    Saliency anomaly score iz Mishne & Cohen, ICASSP 2014, Eq. (9).
+    """
+    H, N = slika_shape
+    n = H * N
+
+    K_eff = min(K, n - 1)
+    if K_eff <= 0:
+        return np.zeros((H, N))
+
+    # K najbližih susjeda u diffusion-map prostoru
+    # +1 jer je najbliži susjed svake točke ona sama
+    nn = NearestNeighbors(n_neighbors=K_eff + 1, metric="euclidean")
+    nn.fit(embedding)
+
+    udaljenosti, indeksi = nn.kneighbors(embedding)
+    udaljenosti = udaljenosti[:, 1:]
+    indeksi = indeksi[:, 1:]
+
+    # sigma_K = std udaljenosti do K-tog najbližeg susjeda
+    sigma_K = np.std(udaljenosti[:, -1])
+    sigma_K = max(sigma_K, eps)
+
+    redovi = np.arange(n) // N
+    stupci = np.arange(n) % N
+
+    redovi_susjeda = redovi[indeksi]
+    stupci_susjeda = stupci[indeksi]
+
+    d_red = redovi[:, None] - redovi_susjeda
+    d_stup = stupci[:, None] - stupci_susjeda
+
+    # d_position normaliziran većom dimenzijom slike
+    d_position = np.sqrt(d_red**2 + d_stup**2) / max(H, N)
+
+    # Eq. (9):
+    # d = (d_DM / (2 * sigma_K)) / (1 + c * d_position)
+    d = (udaljenosti / (2.0 * sigma_K)) / (1.0 + c * d_position)
+
+    scores = 1.0 - np.exp(-np.mean(d, axis=1))
+
     return scores.reshape(H, N)
